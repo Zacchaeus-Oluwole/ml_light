@@ -32,33 +32,57 @@ prediction= model.predict(X_test)
 
 # Serial communication for data transmission
 import serial
-import time
 
-ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
-time.sleep(5) # wait 5 sec
+ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=2)
 ser.reset_input_buffer()
 
 def SendCommand(result):
-    res = bytes(result, 'utf-8')
-    ser.write(res)
+    # Send the result back as an integer
+    ser.write(str(result).encode())
+    ser.write(b'\n')  # Add a newline character to indicate the end of the message
 
 def ReceiveCommand():
-    number = ser.read()
-    if number != b'':
-        num = str(number, 'utf-8')
-        return num
-    
+    data = ""
+    while data == "":
+        try:
+            data = ser.readline().decode().strip()
+            # print("Got this :", data)
+        except:
+            print("Error getting response from arduino, wasted much time \n")
 
+    return data
+    
+l_l = 0
 while True:
 
     recvdata = ReceiveCommand()
-    print(recvdata.split(" "))
 
-    l_l = recvdata.split(" ")[0]
-    occ = recvdata.split(" ")[1]
+    l_l = recvdata.split(",")[0]
+    
+    if len(l_l) > 4:
+        l_l = recvdata[0:4]
+        occ = recvdata[-1]
+    else:
+        try:
+            occ = recvdata.split(",")[1]
+        except:
+            occ = "0"
 
-    light_level = float(l_l)
-    occupancy = int(occ)
+    if len(l_l) < 1:
+        light_level = float(0)
+    else:
+        try:
+            light_level = float(l_l)
+        except:
+            light_level = float(0)
+
+    if len(occ) < 1:
+        occupancy = 0
+    else:
+        try:
+            occupancy = int(occ)
+        except:
+            occupancy = 0
 
     # Make predictions on new data [light_level, occupancy ]
 
@@ -69,27 +93,27 @@ while True:
     if str(predictions) < str([0.635670678]):
         result = 0
         SendCommand(result)
-        print("Light off")
+        print("The light is off")
     elif (str(predictions) >= str([0.635670678])) and str(predictions) < str([0.637836886]):
         result = 1
         SendCommand(result)
-        print("Light level 1")
+        print("Light level is 1")
     elif (str(predictions) >= str([0.637836886])) and str(predictions) < str([0.640003094]):
         result = 2
         SendCommand(result)
-        print("Light level 2")
+        print("Light level is 2")
     elif (str(predictions) >= str([0.640003094])) and str(predictions) < str([0.642169302]):
         result = 3
         SendCommand(result)
-        print("Light level 3")
+        print("Light level is 3")
     elif (str(predictions) >= str([0.642169302])) and str(predictions) < str([0.64433551]):
         result = 4
         SendCommand(result)
-        print("Light level 4")
+        print("Light level is 4")
     elif (str(predictions) >= str([0.64433551])) and str(predictions):
         result = 5
         SendCommand(result)
-        print("Light level 5")
+        print("Light level is 5")
     else:
         result = 5
         SendCommand(result)
