@@ -26,6 +26,8 @@ prediction= model.predict(X_test)
 
 # Serial communication for data transmission
 import serial
+from datetime import datetime as d 
+import datetime;
 
 ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=2)
 ser.reset_input_buffer()
@@ -51,10 +53,16 @@ def rev(num):
     return v
 
 def output(occupancy, lp, result):
-    l = "Occupancy Detected: " + str(occupancy) + " Light Intensity: "+ str(lp)+ "% LED1: " + str(result) + "V LED2: 5V"
+
+    current_time = datetime.datetime.now()
+    time_stamp = current_time.timestamp()
+    date_time = d.fromtimestamp(time_stamp)
+    str_time = date_time.strftime("%I%p %M:%S")
+
+    l = "Occupancy Detected: " + str(occupancy) + " Light Intensity: "+ str(lp)+ "% LED1: " + str(result) + "V LED2: 5V Time: " + str_time + "\n"
     print(l)
     with open('result.txt', 'a') as fp:
-        fp.write("%s\n" % l)
+        fp.write("%s" % l)
     
 l_l = 0
 while True:
